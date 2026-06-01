@@ -21,28 +21,39 @@ export interface CreateProductPayload {
   imageUrl?: string
   productType?: 'DIGITAL' | 'PHYSICAL'
   fileUrl?: string
-  fileSize?: number
-  weight?: number
 }
 
 export const productsApi = {
   getAll: async (filter?: ProductsFilter) => {
-    const res = await api.get<{ items: Product[]; total: number; page: number; limit: number }>('/products', filter as Record<string, string | number | undefined>)
-    return res.items
+    const res = await api.get<{ items: any[]; total: number; page: number; limit: number }>('/products', filter as Record<string, string | number | undefined>)
+    return res.items.map((p: any) => ({
+      ...p,
+      imageUrl: p.images?.[0]?.url || '',
+      sellerName: p.seller?.name,
+    }))
   },
 
   getById: (id: string) =>
-    api.get<Product>(`/products/${id}`),
+    api.get<any>(`/products/${id}`).then((p: any) => ({
+      ...p,
+      imageUrl: p.images?.[0]?.url || '',
+      sellerName: p.seller?.name,
+    })),
 
   create: (payload: CreateProductPayload) => {
-    // Strip fields not accepted by deployed backend DTO
-    const { imageUrl, fileSize, weight, ...cleanPayload } = payload
-    return api.post<Product>('/products', cleanPayload)
+    const { fileSize, weight, ...cleanPayload } = payload as any
+    return api.post<any>('/products', cleanPayload).then((p: any) => ({
+      ...p,
+      imageUrl: p.images?.[0]?.url || '',
+    }))
   },
 
   update: (id: string, payload: Partial<CreateProductPayload>) => {
-    const { imageUrl, fileSize, weight, ...cleanPayload } = payload as any
-    return api.put<Product>(`/products/${id}`, cleanPayload)
+    const { fileSize, weight, ...cleanPayload } = payload as any
+    return api.put<any>(`/products/${id}`, cleanPayload).then((p: any) => ({
+      ...p,
+      imageUrl: p.images?.[0]?.url || '',
+    }))
   },
 
   delete: (id: string) =>

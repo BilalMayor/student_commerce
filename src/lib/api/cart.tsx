@@ -4,9 +4,14 @@ import { CartItem } from '@/types'
 export const cartApi = {
   getCart: async (): Promise<CartItem[]> => {
     const data = await api.get<any>('/cart')
-    if (Array.isArray(data)) return data
-    if (data && Array.isArray(data.items)) return data.items
-    return []
+    const raw = Array.isArray(data) ? data : (data && Array.isArray(data.items) ? data.items : [])
+    return raw.map((item: any) => ({
+      ...item,
+      product: item.product ? {
+        ...item.product,
+        imageUrl: item.product.images?.[0]?.url || '',
+      } : undefined,
+    }))
   },
 
   addItem: async (productId: string, quantity: number = 1) => {

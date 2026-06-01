@@ -26,6 +26,7 @@ export default function CartPage() {
       .getCart()
       .then((data) => {
         console.log('Cart data from API:', data)
+        console.log('items keys:', data.map((i: any) => i.productId))
         if (data && data.length > 0) {
           setItems(data)
           setStoreItems(data)
@@ -50,12 +51,16 @@ export default function CartPage() {
       toast.error('ID produk tidak valid')
       return
     }
+    const updated = items.filter((i) => i.productId !== productId)
+    setItems(updated)
+    setStoreItems(updated)
     try {
       await cartApi.removeItem(productId)
       toast.success('Produk berhasil dihapus!')
       fetchCart()
     } catch (e: any) {
       console.error('Remove error:', e?.message || e)
+      fetchCart()
       toast.error('Gagal menghapus produk')
     }
   }
@@ -116,7 +121,7 @@ export default function CartPage() {
         />
       ) : (
         <div className="flex flex-col gap-6 lg:flex-row items-start">
-          <div className="flex-1 space-y-3 sm:space-y-4 w-full">
+          <div className="flex-1 space-y-3 sm:space-y-4 w-full overflow-visible">
             <AnimatePresence>
               {items.map((item) => (
                 <motion.div

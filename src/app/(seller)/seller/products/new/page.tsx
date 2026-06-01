@@ -103,9 +103,7 @@ export default function NewProductPage() {
         categoryId,
         productType,
         imageUrl: imageUrl || undefined,
-        weight: productType === 'PHYSICAL' ? weight : undefined,
-        fileUrl: productType === 'DIGITAL' ? fileUrl : undefined,
-        fileSize: productType === 'DIGITAL' ? fileSize : undefined
+        fileUrl: productType === 'DIGITAL' ? fileUrl : undefined
       })
       toast.success('Produk berhasil ditambahkan!')
       router.push('/seller/products')
