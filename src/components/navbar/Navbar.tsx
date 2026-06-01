@@ -139,24 +139,18 @@ export default function Navbar() {
               aria-label="Keranjang"
             >
               <ShoppingCart size={22} />
-              {mounted ? (
+              {mounted && totalItems > 0 && (
                 <AnimatePresence>
-                  {totalItems > 0 && (
-                    <motion.span
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      exit={{ scale: 0 }}
-                      className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#7f5531] text-[10px] text-white font-bold"
-                    >
-                      {totalItems > 99 ? '99+' : totalItems}
-                    </motion.span>
-                  )}
+                  <motion.span
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    exit={{ scale: 0 }}
+                    className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#7f5531] text-[10px] text-white font-bold"
+                  >
+                    {totalItems > 99 ? '99+' : totalItems}
+                  </motion.span>
                 </AnimatePresence>
-              ) : totalItems > 0 ? (
-                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#7f5531] text-[10px] text-white font-bold">
-                  {totalItems > 99 ? '99+' : totalItems}
-                </span>
-              ) : null}
+              )}
             </Link>
 
             {isAuthenticated && (
@@ -166,24 +160,18 @@ export default function Navbar() {
                 aria-label="Notifikasi"
               >
                 <Bell size={22} />
-                {mounted ? (
+                {mounted && unreadCount > 0 && (
                   <AnimatePresence>
-                    {unreadCount > 0 && (
-                      <motion.span
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        exit={{ scale: 0 }}
-                        className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#7f5531] text-[10px] text-white font-bold"
-                      >
-                        {unreadCount > 99 ? '99+' : unreadCount}
-                      </motion.span>
-                    )}
+                    <motion.span
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      exit={{ scale: 0 }}
+                      className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#7f5531] text-[10px] text-white font-bold"
+                    >
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </motion.span>
                   </AnimatePresence>
-                ) : unreadCount > 0 ? (
-                  <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#7f5531] text-[10px] text-white font-bold">
-                    {unreadCount > 99 ? '99+' : unreadCount}
-                  </span>
-                ) : null}
+                )}
               </Link>
             )}
 
@@ -314,7 +302,7 @@ export default function Navbar() {
               >
                 <div className="relative">
                   <Icon size={20} />
-                  {link.href === '/orders' && totalItems > 0 && (
+                  {mounted && link.href === '/orders' && totalItems > 0 && (
                     <span className="absolute -top-1 -right-2 w-2 h-2 rounded-full bg-[#7f5531]" />
                   )}
                 </div>
@@ -337,7 +325,7 @@ export default function Navbar() {
           >
             <div className="relative">
               <ShoppingCart size={20} />
-              {totalItems > 0 && (
+              {mounted && totalItems > 0 && (
                 <span className="absolute -top-1.5 -right-2.5 flex h-4 w-4 items-center justify-center rounded-full bg-[#7f5531] text-[8px] text-white font-bold">
                   {totalItems > 9 ? '9+' : totalItems}
                 </span>
@@ -355,7 +343,7 @@ export default function Navbar() {
             >
               <div className="relative">
                 <Bell size={20} />
-                {unreadCount > 0 && (
+                {mounted && unreadCount > 0 && (
                   <span className="absolute -top-1.5 -right-2.5 flex h-4 w-4 items-center justify-center rounded-full bg-[#7f5531] text-[8px] text-white font-bold">
                     {unreadCount > 9 ? '9+' : unreadCount}
                   </span>
