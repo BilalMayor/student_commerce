@@ -31,7 +31,12 @@ export default function SellerProductsPage() {
       await productsApi.delete(id)
       setProducts((prev) => prev.filter((p) => p.id !== id))
     } catch (e: any) {
-      alert(e.message || 'Gagal menghapus produk')
+      const msg = e.message || ''
+      if (msg.includes('foreign key constraint') || msg.includes('CartItem')) {
+        alert('Produk gagal dihapus karena masih ada di keranjang belanja pengguna. Hapus stok menjadi 0 untuk menonaktifkan penjualan.')
+      } else {
+        alert(msg || 'Gagal menghapus produk')
+      }
     }
   }
 

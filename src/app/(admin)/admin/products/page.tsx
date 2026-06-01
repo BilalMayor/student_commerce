@@ -29,7 +29,12 @@ export default function AdminProductsPage() {
       setProducts(products.filter(p => p.id !== id))
       toast.success('Produk berhasil dihapus')
     } catch (err: any) {
-      toast.error(err.message || 'Gagal menghapus produk')
+      const msg = err.message || ''
+      if (msg.includes('foreign key constraint') || msg.includes('CartItem')) {
+        toast.error('Produk gagal dihapus karena masih ada di keranjang pengguna. Set stok ke 0 untuk menonaktifkan.')
+      } else {
+        toast.error(msg || 'Gagal menghapus produk')
+      }
     }
   }
 

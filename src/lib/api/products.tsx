@@ -56,6 +56,15 @@ export const productsApi = {
     }))
   },
 
-  delete: (id: string) =>
-    api.delete(`/products/${id}`),
+  delete: async (id: string) => {
+    try {
+      return await api.delete(`/products/${id}`)
+    } catch (e: any) {
+      const msg = e.message || ''
+      if (msg.includes('foreign key constraint') || msg.includes('CartItem')) {
+        throw new Error('Produk gagal dihapus karena masih ada di keranjang belanja pengguna. Set stok ke 0 untuk menonaktifkan penjualan.')
+      }
+      throw e
+    }
+  },
 }

@@ -57,7 +57,7 @@ export default function EditProductPage({ params: paramsPromise }: { params: Pro
     e.preventDefault()
     setSubmitLoading(true)
     try {
-      await productsApi.update(productId, { name, description, price, stock, categoryId })
+      await productsApi.update(productId, { name, description, price, stock, categoryId, imageUrl: imageUrl || undefined })
       router.push('/seller/products')
     } catch (e: any) {
       alert(e.message || 'Gagal memperbarui produk')
