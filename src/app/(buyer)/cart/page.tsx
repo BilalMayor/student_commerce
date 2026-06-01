@@ -25,12 +25,18 @@ export default function CartPage() {
     cartApi
       .getCart()
       .then((data) => {
+        console.log('Cart data from API:', data)
         if (data && data.length > 0) {
           setItems(data)
           setStoreItems(data)
+        } else {
+          setItems([])
+          setStoreItems([])
         }
       })
-      .catch(() => {})
+      .catch((e) => {
+        console.error('Cart fetch error:', e)
+      })
       .finally(() => setLoading(false))
   }
 
@@ -39,11 +45,17 @@ export default function CartPage() {
   }, [])
 
   const handleRemove = async (productId: string) => {
+    if (!productId) {
+      console.error('productId is undefined!')
+      toast.error('ID produk tidak valid')
+      return
+    }
     try {
       await cartApi.removeItem(productId)
       toast.success('Produk berhasil dihapus!')
       fetchCart()
-    } catch (_) {
+    } catch (e: any) {
+      console.error('Remove error:', e?.message || e)
       toast.error('Gagal menghapus produk')
     }
   }

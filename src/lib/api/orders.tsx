@@ -9,7 +9,7 @@ export const ordersApi = {
     api.get<Order[]>('/orders/seller'),
 
   getAllOrders: () =>
-    api.get<Order[]>('/orders/admin'),
+    api.get<Order[]>('/orders'),
 
   getById: (id: string) =>
     api.get<Order>(`/orders/${id}`),

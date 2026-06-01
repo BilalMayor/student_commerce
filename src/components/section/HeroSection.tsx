@@ -1,6 +1,11 @@
+'use client'
+
+import { useRouter } from 'next/navigation'
 import SearchBar from '../search/SearchBar'
 
 export default function HeroSection() {
+  const router = useRouter()
+
   return (
     <section className="relative w-full py-12 md:py-20 px-6 sm:px-10 max-w-[1280px] mx-auto overflow-hidden">
       <div className="grid md:grid-cols-2 gap-12 items-center">
@@ -12,10 +17,16 @@ export default function HeroSection() {
             Platform eksklusif mahasiswa untuk jual-beli buku, alat tulis, hingga aset digital dengan keamanan terjamin.
           </p>
           <div className="flex flex-wrap gap-4">
-            <button className="px-6 sm:px-8 py-3.5 sm:py-4 bg-[#7f5531] text-white rounded-xl font-bold text-sm sm:text-base hover:scale-[1.02] transition-transform active:scale-95 shadow-lg shadow-[#7f5531]/20">
+            <button
+              onClick={() => router.push('/search')}
+              className="px-6 sm:px-8 py-3.5 sm:py-4 bg-[#7f5531] text-white rounded-xl font-bold text-sm sm:text-base hover:scale-[1.02] transition-transform active:scale-95 shadow-lg shadow-[#7f5531]/20"
+            >
               Mulai Belanja
             </button>
-            <button className="px-6 sm:px-8 py-3.5 sm:py-4 bg-white border-2 border-[#d5c3b8] text-[#1c1c19] rounded-xl font-bold text-sm sm:text-base hover:bg-[#f0ede9] transition-colors active:scale-95">
+            <button
+              onClick={() => router.push('/register?role=SELLER')}
+              className="px-6 sm:px-8 py-3.5 sm:py-4 bg-white border-2 border-[#d5c3b8] text-[#1c1c19] rounded-xl font-bold text-sm sm:text-base hover:bg-[#f0ede9] transition-colors active:scale-95"
+            >
               Jadi Penjual
             </button>
           </div>

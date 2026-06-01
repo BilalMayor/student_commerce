@@ -79,7 +79,7 @@ export default function AdminOrdersPage() {
                   </td>
                   <td className="px-6 py-4 text-right">
                     <Link 
-                      href={`/orders/${order.id}`}
+                      href={`/admin/orders/${order.id}`}
                       className="inline-flex items-center gap-1 text-xs font-bold text-[#7f5531] hover:underline"
                     >
                       Detail <ArrowRight size={14} />

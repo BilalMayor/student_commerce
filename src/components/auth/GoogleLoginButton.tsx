@@ -21,8 +21,13 @@ export default function GoogleLoginButton() {
       setAuth(res.user, res.token)
       toast.success('Login Google berhasil!')
 
-      const params = new URLSearchParams(window.location.search)
-      const redirect = params.get('redirect') || '/'
+      let redirect = '/'
+      if (res.user.role === 'ADMIN') {
+        redirect = '/admin/dashboard'
+      } else {
+        const params = new URLSearchParams(window.location.search)
+        redirect = params.get('redirect') || '/'
+      }
       router.push(redirect)
     } catch (e: any) {
       toast.error(e.message || 'Login Google gagal. Hubungi admin atau coba lagi.')
