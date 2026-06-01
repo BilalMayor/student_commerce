@@ -11,11 +11,11 @@ import { usersApi } from '@/lib/api/users'
 import { addressesApi } from '@/lib/api/addresses'
 import { ordersApi } from '@/lib/api/orders'
 import { reviewsApi } from '@/lib/api/reviews'
-import { notificationsApi } from '@/lib/api/notifications'
 import { uploadImage } from '@/lib/api/upload'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useCart } from '@/lib/hooks/useCart'
-import { Address, Order, Review, Notification } from '@/types'
+import { useNotificationStore } from '@/lib/store/notificationStore'
+import { Address, Order, Review } from '@/types'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import { Skeleton } from '@/components/ui/Skeleton'
@@ -45,7 +45,10 @@ function ProfilePageContent() {
   const [addresses, setAddresses] = useState<Address[]>([])
   const [orders, setOrders] = useState<Order[]>([])
   const [reviews, setReviews] = useState<Review[]>([])
-  const [notifications, setNotifications] = useState<Notification[]>([])
+  const notifications = useNotificationStore((s) => s.notifications)
+  const fetchNotifications = useNotificationStore((s) => s.fetchNotifications)
+  const markAsRead = useNotificationStore((s) => s.markAsRead)
+  const markAllAsRead = useNotificationStore((s) => s.markAllAsRead)
 
   // Address form fields
   const [showAddressForm, setShowAddressForm] = useState(false)
@@ -86,17 +89,16 @@ function ProfilePageContent() {
     const loadData = async () => {
       setLoading(true)
       try {
-        const [addrData, orderData, reviewData, notifData] = await Promise.all([
+        const [addrData, orderData, reviewData] = await Promise.all([
           addressesApi.getAll().catch(() => []),
           ordersApi.getAll().catch(() => []),
           reviewsApi.getMyReviews().catch(() => []),
-          notificationsApi.getAll().catch(() => []),
         ])
 
         setAddresses(addrData)
         setOrders(orderData)
         setReviews(reviewData)
-        setNotifications(notifData)
+        fetchNotifications()
         await fetchCart()
       } catch (err: any) {
         toast.error('Gagal mengambil data lengkap profil')
@@ -185,10 +187,7 @@ function ProfilePageContent() {
   // Notification operations
   const handleMarkAsRead = async (id: string) => {
     try {
-      await notificationsApi.markAsRead(id)
-      setNotifications((prev) =>
-        prev.map((notif) => (notif.id === id ? { ...notif, isRead: true } : notif))
-      )
+      await markAsRead(id)
       toast.success('Notifikasi ditandai dibaca')
     } catch (err: any) {
       toast.error('Gagal memperbarui status notifikasi')
@@ -197,8 +196,7 @@ function ProfilePageContent() {
 
   const handleMarkAllAsRead = async () => {
     try {
-      await notificationsApi.markAllAsRead()
-      setNotifications((prev) => prev.map((notif) => ({ ...notif, isRead: true })))
+      await markAllAsRead()
       toast.success('Semua notifikasi ditandai dibaca')
     } catch (err: any) {
       toast.error('Gagal memperbarui status notifikasi')
@@ -207,7 +205,7 @@ function ProfilePageContent() {
 
   // Helper stats
   const pendingOrders = orders.filter(o => o.status === 'PENDING').length
-  const unreadNotifs = notifications.filter(n => !n.isRead).length
+  const unreadNotifs = useNotificationStore((s) => s.unreadCount)
 
   if (loading) {
     return (

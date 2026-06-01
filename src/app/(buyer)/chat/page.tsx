@@ -215,7 +215,7 @@ function ChatContent() {
       }
       setPolling(false)
     }
-  }, [activeContact, currentUser, socket?.connected])
+  }, [activeContact, currentUser, socket, socket?.connected])
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault()

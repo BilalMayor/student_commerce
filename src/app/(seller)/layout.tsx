@@ -20,17 +20,7 @@ export default function SellerLayout({ children }: { children: React.ReactNode }
     }
   }, [user, isAuthenticated, router])
 
-  useSocket((notification) => {
-    const message = notification.message || ''
-    if (
-      message.toLowerCase().includes('pesanan') ||
-      message.toLowerCase().includes('order') ||
-      message.toLowerCase().includes('bayar') ||
-      message.toLowerCase().includes('pembayaran')
-    ) {
-      toast.info(`📦 ${message}`)
-    }
-  })
+  useSocket()
 
   if (checking) {
     return (

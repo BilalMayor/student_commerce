@@ -12,7 +12,7 @@ import { useAuth } from '@/lib/hooks/useAuth'
 import { cn } from '@/lib/utils/cn'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useSocket } from '@/lib/hooks/useSocket'
-import { notificationsApi } from '@/lib/api/notifications'
+import { useNotificationStore } from '@/lib/store/notificationStore'
 
 const navLinks = [
   { href: '/', label: 'Beranda', icon: Home },
@@ -26,10 +26,11 @@ export default function Navbar() {
   const router = useRouter()
   const totalItems = useCartStore((s) => s.totalItems())
   const { user, isAuthenticated, logout } = useAuth()
+  const unreadCount = useNotificationStore((s) => s.unreadCount)
+  const fetchUnreadCount = useNotificationStore((s) => s.fetchUnreadCount)
   const [searchQuery, setSearchQuery] = useState('')
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
-  const [unreadCount, setUnreadCount] = useState(0)
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => { setMounted(true) }, [])
@@ -42,17 +43,11 @@ export default function Navbar() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      notificationsApi.getUnreadCount()
-        .then((res) => setUnreadCount(res.count))
-        .catch(() => {})
-    } else {
-      setUnreadCount(0)
+      fetchUnreadCount()
     }
-  }, [isAuthenticated, pathname])
+  }, [isAuthenticated, pathname, fetchUnreadCount])
 
-  useSocket(() => {
-    setUnreadCount((c) => c + 1)
-  })
+  useSocket()
 
   const isActive = (href: string) => {
     if (href === '/') return pathname === '/'

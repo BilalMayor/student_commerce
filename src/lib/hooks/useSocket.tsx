@@ -1,9 +1,10 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import { io, Socket } from 'socket.io-client'
 import Cookies from 'js-cookie'
 import { toast } from '@/lib/hooks/useToast'
+import { useNotificationStore } from '@/lib/store/notificationStore'
 
 function getToken(): string | null {
   let token: string | null = Cookies.get('token') || null
@@ -16,60 +17,81 @@ function getToken(): string | null {
   return token
 }
 
+let rootSocket: Socket | null = null
+let notifSocket: Socket | null = null
+let currentToken: string | null = null
+const notifListeners = new Set<(notification: any) => void>()
+function initSockets(token: string) {
+  if (rootSocket?.connected && currentToken === token) return
+  if (!token) return
+
+  if (rootSocket) {
+    rootSocket.removeAllListeners()
+    rootSocket.disconnect()
+  }
+  if (notifSocket) {
+    notifSocket.removeAllListeners()
+    notifSocket.disconnect()
+  }
+
+  currentToken = token
+
+  const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || 'https://uklsm4-production.up.railway.app'
+
+  rootSocket = io(socketUrl, {
+    auth: { token },
+    transports: ['websocket', 'polling'],
+    reconnection: true,
+    reconnectionAttempts: Infinity,
+    reconnectionDelay: 2000,
+    reconnectionDelayMax: 10000,
+    timeout: 20000,
+  })
+
+  notifSocket = io(socketUrl + '/notifications', {
+    auth: { token },
+    transports: ['websocket', 'polling'],
+    reconnection: true,
+    reconnectionAttempts: Infinity,
+    reconnectionDelay: 2000,
+    reconnectionDelayMax: 10000,
+    timeout: 20000,
+  })
+
+  notifSocket.on('new_notification', (data: any) => {
+    toast.info(data.message || 'Anda menerima notifikasi baru!')
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      if (Notification.permission === 'granted') {
+        try { new Notification('StudentCommerce', { body: data.message, icon: '/favicon.ico' }) } catch (e) {}
+      } else if (Notification.permission !== 'denied') {
+        Notification.requestPermission().then((permission) => {
+          if (permission === 'granted') {
+            try { new Notification('StudentCommerce', { body: data.message, icon: '/favicon.ico' }) } catch (e) {}
+          }
+        })
+      }
+    }
+    useNotificationStore.getState().incrementUnread()
+    notifListeners.forEach((cb) => cb(data))
+  })
+}
+
 export function useSocket(onNotificationReceived?: (notification: any) => void) {
-  const socketRef = useRef<Socket | null>(null)
-  const notifSocketRef = useRef<Socket | null>(null)
+  const [socket, setSocket] = useState<Socket | null>(null)
 
   useEffect(() => {
-    const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || 'https://uklsm4-production.up.railway.app'
-    const t = getToken()
-    if (!t) return
+    const token = getToken()
+    if (!token) return
 
-    // Root namespace socket (for chat)
-    const socket = io(socketUrl, {
-      auth: { token: t },
-      transports: ['websocket', 'polling'],
-      reconnection: true,
-      reconnectionAttempts: Infinity,
-      reconnectionDelay: 2000,
-      reconnectionDelayMax: 10000,
-      timeout: 20000,
-    })
-    socketRef.current = socket
+    initSockets(token)
+    setSocket(rootSocket)
+  }, [])
 
-    // /notifications namespace socket
-    const notifSocket = io(socketUrl + '/notifications', {
-      auth: { token: t },
-      transports: ['websocket', 'polling'],
-      reconnection: true,
-      reconnectionAttempts: Infinity,
-      reconnectionDelay: 2000,
-      reconnectionDelayMax: 10000,
-      timeout: 20000,
-    })
-    notifSocketRef.current = notifSocket
-
-    notifSocket.on('new_notification', (data: any) => {
-      toast.info(data.message || 'Anda menerima notifikasi baru!')
-      if (typeof window !== 'undefined' && 'Notification' in window) {
-        if (Notification.permission === 'granted') {
-          try { new Notification('StudentCommerce', { body: data.message, icon: '/favicon.ico' }) } catch (e) {}
-        } else if (Notification.permission !== 'denied') {
-          Notification.requestPermission().then((permission) => {
-            if (permission === 'granted') {
-              try { new Notification('StudentCommerce', { body: data.message, icon: '/favicon.ico' }) } catch (e) {}
-            }
-          })
-        }
-      }
-      if (onNotificationReceived) { onNotificationReceived(data) }
-    })
-
-    return () => {
-      socket.disconnect()
-      notifSocket.disconnect()
-    }
+  useEffect(() => {
+    if (!onNotificationReceived) return
+    notifListeners.add(onNotificationReceived)
+    return () => { notifListeners.delete(onNotificationReceived) }
   }, [onNotificationReceived])
 
-  return socketRef.current
+  return socket
 }
