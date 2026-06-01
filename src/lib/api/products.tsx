@@ -49,7 +49,7 @@ export const productsApi = {
   },
 
   update: (id: string, payload: Partial<CreateProductPayload>) => {
-    const { fileSize, weight, ...cleanPayload } = payload as any
+    const { imageUrl, fileSize, weight, ...cleanPayload } = payload as any
     return api.put<any>(`/products/${id}`, cleanPayload).then((p: any) => ({
       ...p,
       imageUrl: p.images?.[0]?.url || '',

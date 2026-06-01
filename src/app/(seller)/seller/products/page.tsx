@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Sidebar from '@/components/layout/Sidebar'
 import { productsApi } from '@/lib/api/products'
+import { useAuthStore } from '@/lib/store/authStore'
 import { Product } from '@/types'
 import Button from '@/components/ui/Button'
 import { formatCurrency } from '@/lib/utils/formatCurrency'
@@ -12,18 +13,20 @@ import { Plus, Edit2, Trash2, Package } from 'lucide-react'
 import { Skeleton } from '@/components/ui/Skeleton'
 
 export default function SellerProductsPage() {
+  const user = useAuthStore((s) => s.user)
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
 
   const fetchProducts = () => {
     setLoading(true)
     productsApi.getAll()
+      .then((all) => all.filter((p) => p.sellerId === user?.id))
       .then(setProducts)
       .catch(() => setProducts([]))
       .finally(() => setLoading(false))
   }
 
-  useEffect(() => { fetchProducts() }, [])
+  useEffect(() => { if (user) fetchProducts() }, [user])
 
   const handleDelete = async (id: string) => {
     if (!confirm('Hapus produk ini?')) return

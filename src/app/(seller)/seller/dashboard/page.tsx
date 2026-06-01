@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from 'react'
 import Sidebar from '@/components/layout/Sidebar'
 import { productsApi } from '@/lib/api/products'
 import { ordersApi } from '@/lib/api/orders'
+import { useAuthStore } from '@/lib/store/authStore'
 import { formatCurrency } from '@/lib/utils/formatCurrency'
 import {
   ShoppingBag, ClipboardList, Wallet, TrendingUp,
@@ -40,6 +41,7 @@ ChartJS.register(
 )
 
 export default function SellerDashboardPage() {
+  const user = useAuthStore((s) => s.user)
   const [productsCount, setProductsCount] = useState(0)
   const [ordersCount, setOrdersCount] = useState(0)
   
@@ -73,7 +75,8 @@ export default function SellerDashboardPage() {
         ordersApi.getAll().catch(() => [])
       ])
 
-      setProductsCount(products.length)
+      const myProducts = user ? products.filter((p) => p.sellerId === user.id) : products
+      setProductsCount(myProducts.length)
       setOrdersCount(orders.length)
 
       // Filter successful orders for revenue calculation
