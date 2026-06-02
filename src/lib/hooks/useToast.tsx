@@ -1,7 +1,9 @@
 'use client'
 
+import { toast as sonnerToast } from 'sonner'
 import { create } from 'zustand'
 
+// Keep store for backward compat with any code reading useToastStore
 export interface ToastItem {
   id: string
   message: string
@@ -17,25 +19,21 @@ interface ToastState {
 export const useToastStore = create<ToastState>((set) => ({
   toasts: [],
   addToast: (message, type = 'info') => {
-    const id = Math.random().toString(36).slice(2)
-    set((state) => ({ toasts: [...state.toasts, { id, message, type }] }))
-    setTimeout(() => {
-      set((state) => ({ toasts: state.toasts.filter((t) => t.id !== id) }))
-    }, 4000)
+    if (type === 'success') sonnerToast.success(message)
+    else if (type === 'error') sonnerToast.error(message)
+    else sonnerToast(message)
   },
-  removeToast: (id) => set((state) => ({ toasts: state.toasts.filter((t) => t.id !== id) })),
+  removeToast: () => {},
 }))
 
 export function useToast() {
-  const toasts = useToastStore((s) => s.toasts)
   const addToast = useToastStore((s) => s.addToast)
-  const removeToast = useToastStore((s) => s.removeToast)
-  return { toasts, addToast, removeToast }
+  return { addToast }
 }
 
+// Delegate to Sonner directly
 export const toast = {
-  success: (message: string) => useToastStore.getState().addToast(message, 'success'),
-  error: (message: string) => useToastStore.getState().addToast(message, 'error'),
-  info: (message: string) => useToastStore.getState().addToast(message, 'info'),
+  success: (message: string) => sonnerToast.success(message),
+  error: (message: string) => sonnerToast.error(message),
+  info: (message: string) => sonnerToast(message),
 }
-

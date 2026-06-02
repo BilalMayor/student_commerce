@@ -1,0 +1,32 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+:root {
+  /* Core Palette */
+  --neo-bg: #FFFBF0;
+  --neo-surface: #FFF5D6;
+  --neo-yellow: #FFE135;
+  --neo-orange: #FF6B2B;
+  --neo-pink: #FF3CAC;
+  --neo-blue: #2B59FF;
+  --neo-green: #00C853;
+  --neo-red: #FF1744;
+  --neo-black: #0A0A0A;
+  --neo-white: #FFFFFF;
+  --neo-muted: #B0A090;
+
+  /* Shadows */
+  --neo-shadow: 4px 4px 0px var(--neo-black);
+  --neo-shadow-hover: 6px 6px 0px var(--neo-black);
+  --neo-shadow-active: 1px 1px 0px var(--neo-black);
+  --neo-shadow-lg: 6px 6px 0px var(--neo-black);
+  --neo-shadow-xl: 8px 8px 0px var(--neo-black);
+
+  /* Typography */
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-body: 'DM Sans', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  /* Borders */
+  --neo-border: 2px solid var(--neo-black);
+  --neo-border-thick: 3px solid var(--neo-black);
+}

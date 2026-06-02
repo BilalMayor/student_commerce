@@ -1,41 +1,72 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import SearchBar from '../search/SearchBar'
+import NeoButton from '@/components/ui/NeoButton'
 
 export default function HeroSection() {
   const router = useRouter()
 
   return (
-    <section className="relative w-full py-12 md:py-20 px-6 sm:px-10 max-w-[1280px] mx-auto overflow-hidden">
-      <div className="grid md:grid-cols-2 gap-12 items-center">
+    <section className="relative w-full min-h-[90vh] bg-[#FFFBF0] flex items-center overflow-hidden border-b-[3px] border-[#0A0A0A]">
+      {/* Background color blocks */}
+      <div className="absolute top-0 right-0 w-1/2 h-full bg-[#FFE135] border-l-[3px] border-[#0A0A0A]" />
+      <div className="absolute top-12 right-12 w-48 h-48 bg-[#FF6B2B] border-2 border-[#0A0A0A] rotate-6" />
+      <div className="absolute bottom-16 right-32 w-32 h-32 bg-[#FF3CAC] border-2 border-[#0A0A0A] -rotate-3" />
+
+      <div className="relative z-10 mx-auto max-w-[1280px] px-6 sm:px-10 w-full grid md:grid-cols-2 gap-12 items-center py-20">
+        {/* Left: Copy */}
         <div>
-          <h1 className="text-4xl sm:text-5xl font-bold text-[#1c1c19] mb-6 leading-tight tracking-tight">
-            Pusat Kebutuhan <br className="hidden sm:block"/><span className="text-[#7f5531]">Kampus Digital</span> Anda.
+          {/* Sticker badge */}
+          <div className="inline-flex items-center gap-2 mb-6 px-4 py-2 bg-[#FF3CAC] text-white border-2 border-[#0A0A0A] shadow-[3px_3px_0px_#0A0A0A] -rotate-1 font-bold text-xs uppercase tracking-widest">
+            🎓 Khusus Pelajar & Mahasiswa
+          </div>
+
+          <h1 className="font-display font-extrabold text-[clamp(2.8rem,6vw,5rem)] leading-[1.05] tracking-tight text-[#0A0A0A] mb-6">
+            Pusat Kebutuhan{' '}
+            <span className="relative inline-block">
+              <span className="relative z-10">Kampus</span>
+              <span className="absolute bottom-0 left-0 right-0 h-4 bg-[#FFE135] -z-0 -rotate-1" />
+            </span>{' '}
+            <span className="text-[#FF6B2B]">Digital</span>{' '}
+            Anda.
           </h1>
-          <p className="text-base sm:text-lg text-[#50443c] mb-8 sm:mb-10 max-w-md leading-relaxed">
-            Platform eksklusif mahasiswa untuk jual-beli buku, alat tulis, hingga aset digital dengan keamanan terjamin.
+
+          <p className="text-base sm:text-lg text-[#0A0A0A] mb-10 max-w-md leading-relaxed font-medium">
+            Jual beli buku, alat tulis, aset digital — platform eksklusif pelajar Indonesia dengan keamanan terjamin.
           </p>
+
           <div className="flex flex-wrap gap-4">
-            <button
-              onClick={() => router.push('/search')}
-              className="px-6 sm:px-8 py-3.5 sm:py-4 bg-[#7f5531] text-white rounded-xl font-bold text-sm sm:text-base hover:scale-[1.02] transition-transform active:scale-95 shadow-lg shadow-[#7f5531]/20"
-            >
-              Mulai Belanja
-            </button>
-            <button
-              onClick={() => router.push('/register?role=SELLER')}
-              className="px-6 sm:px-8 py-3.5 sm:py-4 bg-white border-2 border-[#d5c3b8] text-[#1c1c19] rounded-xl font-bold text-sm sm:text-base hover:bg-[#f0ede9] transition-colors active:scale-95"
-            >
+            <NeoButton variant="orange" size="lg" onClick={() => router.push('/search')}>
+              Mulai Belanja →
+            </NeoButton>
+            <NeoButton variant="white" size="lg" onClick={() => router.push('/register?role=SELLER')}>
               Jadi Penjual
-            </button>
+            </NeoButton>
+          </div>
+
+          {/* Stats row */}
+          <div className="flex flex-wrap gap-4 mt-10">
+            {[['1K+', 'Produk'], ['500+', 'Penjual'], ['10K+', 'Transaksi']].map(([num, label]) => (
+              <div key={label} className="px-4 py-3 bg-white border-2 border-[#0A0A0A] shadow-[3px_3px_0px_#0A0A0A]">
+                <div className="font-mono font-bold text-xl text-[#0A0A0A]">{num}</div>
+                <div className="text-xs font-bold uppercase tracking-wider text-[#B0A090]">{label}</div>
+              </div>
+            ))}
           </div>
         </div>
-        <div className="relative h-[300px] sm:h-[400px] rounded-3xl overflow-hidden shadow-2xl bg-[#ffdcc2] flex items-center justify-center text-7xl sm:text-8xl">
-          🛍️
+
+        {/* Right: Feature card */}
+        <div className="hidden md:flex flex-col gap-4 items-end">
+          <div className="w-full max-w-sm bg-white border-2 border-[#0A0A0A] shadow-[6px_6px_0px_#0A0A0A] p-6">
+            <div className="text-5xl mb-4">🛍️</div>
+            <h3 className="font-display font-bold text-xl text-[#0A0A0A] mb-2">Transaksi Aman</h3>
+            <p className="text-sm text-[#B0A090] font-medium">Escrow system — uang tahan sampai barang diterima.</p>
+          </div>
+          <div className="w-3/4 bg-[#FF3CAC] border-2 border-[#0A0A0A] shadow-[4px_4px_0px_#0A0A0A] p-4 -rotate-2">
+            <p className="font-bold text-white text-sm">"Beli buku bekas jadi gampang banget!" ⭐⭐⭐⭐⭐</p>
+          </div>
         </div>
       </div>
-      <div className="absolute -top-24 -right-24 w-64 h-64 bg-[#c8956c]/20 rounded-full blur-3xl -z-10" />
     </section>
   )
 }

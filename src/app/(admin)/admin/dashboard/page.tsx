@@ -6,14 +6,12 @@ import Link from 'next/link'
 import { usersApi } from '@/lib/api/users'
 import { productsApi } from '@/lib/api/products'
 import { ordersApi } from '@/lib/api/orders'
-import { Skeleton } from '@/components/ui/Skeleton'
+import { NeoSkeleton } from '@/components/ui/NeoSkeleton'
+
+const CARD_COLORS = ['#FFE135', '#FF6B2B', '#FF3CAC']
 
 export default function AdminDashboardPage() {
-  const [stats, setStats] = useState({
-    users: 0,
-    products: 0,
-    orders: 0
-  })
+  const [stats, setStats] = useState({ users: 0, products: 0, orders: 0 })
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -21,30 +19,33 @@ export default function AdminDashboardPage() {
       usersApi.getAll().catch(() => []),
       productsApi.getAll().catch(() => []),
       ordersApi.getAll().catch(() => [])
-    ]).then(([usersData, productsData, ordersData]) => {
-      setStats({
-        users: usersData.length,
-        products: productsData.length,
-        orders: ordersData.length
-      })
+    ]).then(([u, p, o]) => {
+      setStats({ users: u.length, products: p.length, orders: o.length })
       setLoading(false)
     })
   }, [])
 
   const statCards = [
-    { label: 'Total Pengguna', value: stats.users, icon: Users, color: 'bg-blue-100 text-blue-700', link: '/admin/users' },
-    { label: 'Total Produk', value: stats.products, icon: Package, color: 'bg-amber-100 text-amber-700', link: '/admin/products' },
-    { label: 'Total Pesanan', value: stats.orders, icon: ShoppingBag, color: 'bg-emerald-100 text-emerald-700', link: '/admin/orders' },
+    { label: 'Total Pengguna', value: stats.users, icon: Users, link: '/admin/users' },
+    { label: 'Total Produk', value: stats.products, icon: Package, link: '/admin/products' },
+    { label: 'Total Pesanan', value: stats.orders, icon: ShoppingBag, link: '/admin/orders' },
+  ]
+
+  const quickLinks = [
+    { href: '/admin/users', label: 'Manajemen User' },
+    { href: '/admin/products', label: 'Manajemen Produk' },
+    { href: '/admin/orders', label: 'Manajemen Pesanan' },
+    { href: '/admin/sellers', label: 'Verifikasi Seller' },
+    { href: '/admin/categories', label: 'Kategori' },
+    { href: '/admin/reviews', label: 'Ulasan' },
   ]
 
   if (loading) {
     return (
       <div className="space-y-6">
-        <Skeleton className="h-10 w-64 rounded-xl" />
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Skeleton className="h-36 rounded-2xl" />
-          <Skeleton className="h-36 rounded-2xl" />
-          <Skeleton className="h-36 rounded-2xl" />
+        <NeoSkeleton className="h-10 w-64" />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {[1,2,3].map((i) => <NeoSkeleton key={i} className="h-36" />)}
         </div>
       </div>
     )
@@ -52,31 +53,43 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold text-[#1c1c19]">Ringkasan Admin</h1>
-        <p className="text-sm text-[#83746a] mt-1">Pantau seluruh aktivitas di StudentCommerce.</p>
+      <div className="border-b-[3px] border-[#0A0A0A] pb-6">
+        <h1 className="font-display font-extrabold text-2xl sm:text-3xl text-[#0A0A0A] uppercase tracking-tight">Ringkasan Admin</h1>
+        <p className="text-sm text-[#B0A090] mt-1 font-medium">Pantau seluruh aktivitas di StudentCommerce.</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* Stat Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {statCards.map((stat, i) => {
           const Icon = stat.icon
           return (
-            <div key={i} className="bg-white rounded-2xl p-6 border border-[#d5c3b8] flex flex-col justify-between">
-              <div className="flex items-start justify-between">
+            <div key={i} className="bg-white border-2 border-[#0A0A0A] shadow-[4px_4px_0px_#0A0A0A]" style={{ borderTopColor: CARD_COLORS[i], borderTopWidth: 4 }}>
+              <div className="p-6 flex items-start justify-between">
                 <div>
-                  <p className="text-sm font-semibold text-[#83746a]">{stat.label}</p>
-                  <p className="text-4xl font-black text-[#1c1c19] mt-2">{stat.value}</p>
+                  <p className="text-xs font-bold uppercase tracking-widest text-[#B0A090]">{stat.label}</p>
+                  <p className="font-mono font-bold text-4xl text-[#0A0A0A] mt-2">{stat.value.toLocaleString()}</p>
                 </div>
-                <div className={`p-3 rounded-xl ${stat.color}`}>
-                  <Icon size={24} />
-                </div>
+                <Icon size={28} className="text-[#B0A090]" />
               </div>
-              <Link href={stat.link} className="mt-6 flex items-center gap-2 text-sm font-bold text-[#7f5531] hover:underline">
+              <Link href={stat.link} className="flex items-center justify-between px-6 py-3 border-t-2 border-[#0A0A0A] text-xs font-bold uppercase tracking-wide hover:bg-[#FFE135] transition-colors">
                 Lihat Detail <ArrowRight size={14} />
               </Link>
             </div>
           )
         })}
+      </div>
+
+      {/* Quick Nav */}
+      <div>
+        <h2 className="font-display font-bold text-lg uppercase tracking-wide text-[#0A0A0A] mb-4 border-b-2 border-[#0A0A0A] pb-2">Menu Cepat</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          {quickLinks.map((l) => (
+            <Link key={l.href} href={l.href} className="flex items-center justify-between px-4 py-3 bg-white border-2 border-[#0A0A0A] shadow-[3px_3px_0px_#0A0A0A] hover:shadow-[5px_5px_0px_#0A0A0A] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all">
+              <span className="text-sm font-bold text-[#0A0A0A]">{l.label}</span>
+              <ArrowRight size={14} className="text-[#B0A090]" />
+            </Link>
+          ))}
+        </div>
       </div>
     </div>
   )

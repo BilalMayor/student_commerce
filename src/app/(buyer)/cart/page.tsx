@@ -3,16 +3,15 @@
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Trash2, ShoppingBag, Plus, Minus, ArrowLeft, ShoppingCart } from 'lucide-react'
-import Button from '@/components/ui/Button'
-import EmptyState from '@/components/ui/EmptyState'
+import { Trash2, Plus, Minus, ArrowLeft, ShoppingCart } from 'lucide-react'
+import NeoButton from '@/components/ui/NeoButton'
 import { cartApi } from '@/lib/api/cart'
 import { useCartStore } from '@/lib/store/cartStore'
 import { CartItem } from '@/types'
 import { formatCurrency } from '@/lib/utils/formatCurrency'
 import { resolveImageUrl } from '@/lib/utils/image'
-import { Skeleton } from '@/components/ui/Skeleton'
-import { toast } from '@/lib/hooks/useToast'
+import { NeoSkeleton } from '@/components/ui/NeoSkeleton'
+import { toast } from 'sonner'
 import { motion, AnimatePresence } from 'framer-motion'
 
 export default function CartPage() {
@@ -22,106 +21,72 @@ export default function CartPage() {
   const setStoreItems = useCartStore((s) => s.setItems)
 
   const fetchCart = () => {
-    cartApi
-      .getCart()
+    cartApi.getCart()
       .then((data) => {
-        console.log('Cart data from API:', data)
-        console.log('items keys:', data.map((i: any) => i.productId))
-        if (data && data.length > 0) {
-          setItems(data)
-          setStoreItems(data)
-        } else {
-          setItems([])
-          setStoreItems([])
-        }
+        if (data && data.length > 0) { setItems(data); setStoreItems(data) }
+        else { setItems([]); setStoreItems([]) }
       })
-      .catch((e) => {
-        console.error('Cart fetch error:', e)
-      })
+      .catch(() => {})
       .finally(() => setLoading(false))
   }
 
-  useEffect(() => {
-    fetchCart()
-  }, [])
+  useEffect(() => { fetchCart() }, [])
 
   const handleRemove = async (productId: string) => {
-    if (!productId) {
-      console.error('productId is undefined!')
-      toast.error('ID produk tidak valid')
-      return
-    }
-    const updated = items.filter((i) => i.productId !== productId)
-    setItems(updated)
-    setStoreItems(updated)
-    try {
-      await cartApi.removeItem(productId)
-      toast.success('Produk berhasil dihapus!')
-      fetchCart()
-    } catch (e: any) {
-      console.error('Remove error:', e?.message || e)
-      fetchCart()
-      toast.error('Gagal menghapus produk')
-    }
+    if (!productId) { toast.error('ID produk tidak valid'); return }
+    setItems(items.filter((i) => i.productId !== productId))
+    setStoreItems(items.filter((i) => i.productId !== productId))
+    try { await cartApi.removeItem(productId); toast.success('Dihapus!'); fetchCart() }
+    catch { fetchCart(); toast.error('Gagal menghapus') }
   }
 
   const handleUpdate = async (productId: string, quantity: number) => {
     if (quantity < 1) return
-    try {
-      await cartApi.updateItem(productId, quantity)
-      fetchCart()
-    } catch (_) {
-      toast.error('Gagal mengubah jumlah')
-    }
+    try { await cartApi.updateItem(productId, quantity); fetchCart() }
+    catch { toast.error('Gagal mengubah jumlah') }
   }
 
-  const total = items.reduce(
-    (sum, item) => sum + (item.product?.price || 0) * item.quantity,
-    0
-  )
+  const total = items.reduce((sum, item) => sum + (item.product?.price || 0) * item.quantity, 0)
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-5xl px-4 sm:px-6 py-6 sm:py-10 space-y-6">
-        <Skeleton className="h-8 w-44 rounded-xl" />
-        <div className="flex flex-col gap-6 lg:flex-row">
-          <div className="flex-1 space-y-4">
-            {[1, 2].map((i) => (
-              <Skeleton key={i} className="h-28 w-full rounded-[1.75rem]" />
-            ))}
+      <div className="mx-auto max-w-5xl px-4 sm:px-10 py-8 space-y-4">
+        <NeoSkeleton className="h-8 w-48" />
+        <div className="flex flex-col lg:flex-row gap-6">
+          <div className="flex-1 space-y-3">
+            {[1, 2].map((i) => <NeoSkeleton key={i} className="h-28 w-full" />)}
           </div>
-          <div className="lg:w-80">
-            <Skeleton className="h-56 w-full rounded-[1.75rem]" />
-          </div>
+          <NeoSkeleton className="lg:w-80 h-64" />
         </div>
       </div>
     )
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-4 sm:px-6 py-6 sm:py-10 space-y-6 sm:space-y-8 pb-24 md:pb-10">
-      <div className="flex items-center gap-3">
-        <h1 className="text-2xl sm:text-3xl font-black text-ink tracking-tight">
-          Keranjang Belanja
+    <div className="mx-auto max-w-5xl px-4 sm:px-10 py-8 pb-24 md:pb-10">
+      {/* Header */}
+      <div className="flex items-center gap-4 mb-8 border-b-[3px] border-[#0A0A0A] pb-4">
+        <h1 className="font-display font-extrabold text-2xl sm:text-3xl text-[#0A0A0A] uppercase tracking-tight">
+          Keranjang
         </h1>
         {items.length > 0 && (
-          <span className="text-xs font-bold text-muted bg-border/40 px-3 py-1.5 rounded-full">
-            {items.length} {items.length > 1 ? 'produk' : 'produk'}
-          </span>
+          <span className="px-3 py-1 bg-[#FFE135] border-2 border-[#0A0A0A] text-xs font-mono font-bold">{items.length}</span>
         )}
       </div>
 
       {items.length === 0 ? (
-        <EmptyState
-          title="Keranjang masih kosong"
-          description="Yuk mulai belanja kebutuhan pelajarmu!"
-          actionLabel="Jelajahi Produk"
-          actionHref="/search"
-          icon={<ShoppingCart size={36} className="text-muted/40" />}
-        />
+        <div className="border-2 border-[#0A0A0A] shadow-[6px_6px_0px_#0A0A0A] bg-[#FFF5D6] p-16 text-center">
+          <ShoppingCart size={64} className="mx-auto mb-4 text-[#B0A090]" strokeWidth={1.5} />
+          <p className="font-display font-extrabold text-2xl uppercase mb-2">Keranjang Kosong!</p>
+          <p className="text-[#B0A090] mb-6 font-medium">Ayo belanja sesuatu, jangan cuma lihat-lihat.</p>
+          <Link href="/search">
+            <NeoButton variant="yellow" size="lg">Jelajahi Produk →</NeoButton>
+          </Link>
+        </div>
       ) : (
         <div className="flex flex-col gap-6 lg:flex-row items-start">
-          <div className="flex-1 space-y-3 sm:space-y-4 w-full overflow-visible">
+          {/* Items list */}
+          <div className="flex-1 space-y-3 w-full">
             <AnimatePresence>
               {items.map((item) => (
                 <motion.div
@@ -130,67 +95,51 @@ export default function CartPage() {
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: 20 }}
-                  className="flex gap-3 sm:gap-4 rounded-[1.75rem] border border-border/70 bg-white p-3.5 sm:p-4.5 shadow-soft hover:shadow-md transition-all duration-200"
+                  className="flex gap-4 bg-white border-2 border-[#0A0A0A] shadow-[3px_3px_0px_#0A0A0A] p-4"
                 >
-                  <div className="relative h-20 w-20 sm:h-24 sm:w-24 flex-shrink-0 overflow-hidden rounded-2xl bg-accent/5 border border-border/60">
+                  {/* Product image */}
+                  <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden border-2 border-[#0A0A0A] bg-[#FFF5D6]">
                     {item.product?.imageUrl ? (
-                      <Image
-                        src={resolveImageUrl(item.product.imageUrl)}
-                        alt={item.product.name || ''}
-                        fill
-                        className="object-cover"
-                      />
+                      <Image src={resolveImageUrl(item.product.imageUrl)} alt={item.product.name || ''} fill className="object-cover" />
                     ) : (
-                      <div className="flex h-full items-center justify-center text-3xl select-none">
-                        🛍️
-                      </div>
+                      <div className="flex h-full items-center justify-center text-3xl">🛍️</div>
                     )}
                   </div>
 
                   <div className="flex flex-1 flex-col justify-between min-w-0">
                     <div className="flex items-start justify-between gap-2">
-                      <Link
-                        href={`/product/${item.productId}`}
-                        className="font-bold text-sm text-ink leading-snug hover:text-primary transition-colors line-clamp-2"
-                      >
+                      <Link href={`/product/${item.productId}`} className="font-bold text-sm text-[#0A0A0A] hover:text-[#FF6B2B] transition-colors line-clamp-2">
                         {item.product?.name}
                       </Link>
                       <button
                         onClick={() => handleRemove(item.productId)}
-                        className="text-muted/50 hover:text-red-500 p-1.5 rounded-full hover:bg-red-50 transition-all shrink-0 active:scale-90"
-                        aria-label="Hapus produk"
+                        className="p-1.5 border-2 border-transparent hover:border-[#FF1744] hover:bg-[#FF1744]/10 text-[#B0A090] hover:text-[#FF1744] transition-all shrink-0"
+                        aria-label="Hapus"
                       >
-                        <Trash2 size={15} />
+                        <Trash2 size={14} />
                       </button>
                     </div>
-
-                    <div className="flex flex-wrap items-end justify-between gap-2 mt-1">
-                      <p className="font-black text-primary text-sm sm:text-base">
-                        {formatCurrency(
-                          (item.product?.price || 0) * item.quantity
-                        )}
+                    <div className="flex items-end justify-between gap-2 mt-2">
+                      <p className="font-mono font-bold text-lg text-[#FF6B2B]">
+                        {formatCurrency((item.product?.price || 0) * item.quantity)}
                       </p>
-
-                      <div className="flex items-center rounded-xl border-2 border-border/80 bg-white overflow-hidden shadow-soft">
+                      {/* Qty selector */}
+                      <div className="flex items-center border-2 border-[#0A0A0A]">
                         <button
-                          onClick={() =>
-                            handleUpdate(item.productId, item.quantity - 1)
-                          }
-                          className="px-2.5 py-1.5 hover:bg-border/30 text-ink font-bold transition-all disabled:opacity-30"
+                          onClick={() => handleUpdate(item.productId, item.quantity - 1)}
                           disabled={item.quantity <= 1}
+                          className="px-3 py-1.5 bg-[#FFFBF0] hover:bg-[#FFE135] border-r-2 border-[#0A0A0A] transition-colors disabled:opacity-30 font-bold"
                         >
-                          <Minus size={11} className="stroke-[3]" />
+                          <Minus size={12} strokeWidth={3} />
                         </button>
-                        <span className="min-w-[26px] text-center text-xs font-black text-ink">
+                        <span className="px-4 py-1.5 text-xs font-mono font-bold text-[#0A0A0A] bg-white min-w-[2.5rem] text-center">
                           {item.quantity}
                         </span>
                         <button
-                          onClick={() =>
-                            handleUpdate(item.productId, item.quantity + 1)
-                          }
-                          className="px-2.5 py-1.5 hover:bg-border/30 text-ink font-bold transition-all"
+                          onClick={() => handleUpdate(item.productId, item.quantity + 1)}
+                          className="px-3 py-1.5 bg-[#FFFBF0] hover:bg-[#FFE135] border-l-2 border-[#0A0A0A] transition-colors font-bold"
                         >
-                          <Plus size={11} className="stroke-[3]" />
+                          <Plus size={12} strokeWidth={3} />
                         </button>
                       </div>
                     </div>
@@ -200,42 +149,30 @@ export default function CartPage() {
             </AnimatePresence>
           </div>
 
-          {/* Sticky Summary - Desktop */}
+          {/* Summary */}
           <div className="lg:w-80 w-full shrink-0">
-            <div className="rounded-[2rem] border-2 border-border/70 bg-white p-5 sm:p-6 shadow-soft lg:sticky lg:top-24 space-y-5">
-              <h2 className="text-base sm:text-lg font-bold text-ink tracking-tight border-b border-border/50 pb-3">
-                Ringkasan Pesanan
-              </h2>
-
-              <div className="space-y-3 text-sm font-semibold text-muted">
-                <div className="flex justify-between">
+            <div className="bg-[#0A0A0A] border-2 border-[#0A0A0A] shadow-[6px_6px_0px_#B0A090] text-white lg:sticky lg:top-24">
+              <div className="p-5 border-b-2 border-[#B0A090]/30">
+                <h2 className="font-display font-bold uppercase tracking-widest text-[#FFE135] text-sm">Ringkasan</h2>
+              </div>
+              <div className="p-5 space-y-3">
+                <div className="flex justify-between text-sm font-medium text-[#B0A090]">
                   <span>Subtotal ({items.length} produk)</span>
-                  <span className="text-ink">{formatCurrency(total)}</span>
+                  <span className="font-mono text-white">{formatCurrency(total)}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span>Estimasi Pengiriman</span>
-                  <span className="text-emerald-600 font-bold">Gratis Ongkir</span>
+                <div className="flex justify-between text-sm font-medium text-[#B0A090]">
+                  <span>Ongkos Kirim</span>
+                  <span className="text-[#00C853] font-bold">GRATIS</span>
                 </div>
-              </div>
-
-              <div className="border-t border-border/60 pt-4 flex items-center justify-between font-black text-ink">
-                <span>Total Belanja</span>
-                <span className="text-primary text-lg">{formatCurrency(total)}</span>
-              </div>
-
-              <Link href="/checkout" className="block">
-                <Button fullWidth size="lg">
-                  Lanjut ke Checkout
-                </Button>
-              </Link>
-
-              <div className="text-center">
-                <Link
-                  href="/search"
-                  className="inline-flex items-center gap-1 text-xs font-bold text-muted hover:text-primary transition-colors"
-                >
-                  <ArrowLeft size={12} />
-                  Lanjut Belanja
+                <div className="border-t-2 border-[#B0A090]/30 pt-3 flex justify-between font-bold text-[#FFE135]">
+                  <span className="uppercase tracking-wide text-sm">Total</span>
+                  <span className="font-mono text-lg">{formatCurrency(total)}</span>
+                </div>
+                <Link href="/checkout" className="block pt-2">
+                  <NeoButton variant="yellow" size="lg" fullWidth>Checkout →</NeoButton>
+                </Link>
+                <Link href="/search" className="flex items-center justify-center gap-1 text-xs text-[#B0A090] hover:text-[#FFE135] transition-colors py-1">
+                  <ArrowLeft size={12} /> Lanjut Belanja
                 </Link>
               </div>
             </div>
