@@ -9,7 +9,20 @@ export interface ChatMessage {
   status: 'sent' | 'delivered' | 'read'
 }
 
+export interface ConversationItem {
+  contact: {
+    id: string
+    name: string
+    avatarUrl?: string
+  }
+  lastMessage: ChatMessage | null
+  unreadCount: number
+}
+
 export const chatApi = {
+  getConversations: () =>
+    api.get<ConversationItem[]>('/chat/conversations'),
+
   getConversation: (userId: string) =>
     api.get<ChatMessage[]>(`/chat/conversation/${userId}`),
 

@@ -27,7 +27,9 @@ export default function Navbar() {
   const totalItems = useCartStore((s) => s.totalItems())
   const { user, isAuthenticated, logout } = useAuth()
   const unreadCount = useNotificationStore((s) => s.unreadCount)
+  const chatUnreadCount = useNotificationStore((s) => s.chatUnreadCount)
   const fetchUnreadCount = useNotificationStore((s) => s.fetchUnreadCount)
+  const fetchChatUnreadCount = useNotificationStore((s) => s.fetchChatUnreadCount)
   const [searchQuery, setSearchQuery] = useState('')
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
@@ -44,8 +46,9 @@ export default function Navbar() {
   useEffect(() => {
     if (isAuthenticated) {
       fetchUnreadCount()
+      fetchChatUnreadCount()
     }
-  }, [isAuthenticated, pathname, fetchUnreadCount])
+  }, [isAuthenticated, pathname, fetchUnreadCount, fetchChatUnreadCount])
 
   useSocket()
 
@@ -80,13 +83,18 @@ export default function Navbar() {
                     key={link.href}
                     href={link.href}
                     className={cn(
-                      'transition-colors',
+                      'transition-colors relative',
                       active
                         ? 'text-[#7f5531] font-bold border-b-2 border-[#7f5531] pb-1'
                         : 'text-[#50443c] hover:text-[#7f5531]'
                     )}
                   >
                     {link.label}
+                    {mounted && link.href === '/chat' && chatUnreadCount > 0 && (
+                      <span className="absolute -top-3 -right-4 flex h-4 w-4 items-center justify-center rounded-full bg-[#7f5531] text-[9px] text-white font-bold">
+                        {chatUnreadCount > 9 ? '9+' : chatUnreadCount}
+                      </span>
+                    )}
                   </Link>
                 )
               })}
@@ -304,6 +312,11 @@ export default function Navbar() {
                   <Icon size={20} />
                   {mounted && link.href === '/orders' && totalItems > 0 && (
                     <span className="absolute -top-1 -right-2 w-2 h-2 rounded-full bg-[#7f5531]" />
+                  )}
+                  {mounted && link.href === '/chat' && chatUnreadCount > 0 && (
+                    <span className="absolute -top-1.5 -right-2.5 flex h-4 w-4 items-center justify-center rounded-full bg-[#7f5531] text-[8px] text-white font-bold">
+                      {chatUnreadCount > 9 ? '9+' : chatUnreadCount}
+                    </span>
                   )}
                 </div>
                 <span className="text-[10px] font-semibold">{link.label}</span>

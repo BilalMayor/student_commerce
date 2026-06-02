@@ -6,9 +6,11 @@ import { notificationsApi } from '@/lib/api/notifications'
 
 interface NotificationState {
   unreadCount: number
+  chatUnreadCount: number
   notifications: Notification[]
   loading: boolean
   fetchUnreadCount: () => Promise<void>
+  fetchChatUnreadCount: () => Promise<void>
   fetchNotifications: () => Promise<void>
   markAsRead: (id: string) => Promise<void>
   markAllAsRead: () => Promise<void>
@@ -18,6 +20,7 @@ interface NotificationState {
 
 export const useNotificationStore = create<NotificationState>((set, get) => ({
   unreadCount: 0,
+  chatUnreadCount: 0,
   notifications: [],
   loading: false,
 
@@ -25,6 +28,13 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
     try {
       const res = await notificationsApi.getUnreadCount()
       set({ unreadCount: res.count })
+    } catch {}
+  },
+
+  fetchChatUnreadCount: async () => {
+    try {
+      const res = await notificationsApi.getUnreadCount('CHAT')
+      set({ chatUnreadCount: res.count })
     } catch {}
   },
 

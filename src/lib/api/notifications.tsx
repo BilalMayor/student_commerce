@@ -5,8 +5,8 @@ export const notificationsApi = {
   getAll: () =>
     api.get<Notification[]>('/notifications'),
 
-  getUnreadCount: () =>
-    api.get<{ count: number }>('/notifications/unread-count'),
+  getUnreadCount: (type?: string) =>
+    api.get<{ count: number }>('/notifications/unread-count', { ...(type ? { type } : {}) }),
 
   markAsRead: (id: string) =>
     api.post(`/notifications/${id}/read`),

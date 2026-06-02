@@ -1,15 +1,12 @@
 'use client'
 
-import { useEffect, useState, useRef, Suspense } from 'react'
+import { useEffect, useState, useRef, Suspense, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useSocket } from '@/lib/hooks/useSocket'
 import { useAuth } from '@/lib/hooks/useAuth'
-import { usersApi } from '@/lib/api/users'
 import { chatApi } from '@/lib/api/chat'
-import { User } from '@/types'
 import { Send, Search, MessageSquare, ArrowLeft, Check, CheckCheck, Smile, ShieldAlert } from 'lucide-react'
 import { toast } from '@/lib/hooks/useToast'
-import Image from 'next/image'
 
 interface ChatMessage {
   id: string
@@ -20,6 +17,16 @@ interface ChatMessage {
   status: 'sent' | 'delivered' | 'read'
 }
 
+interface ContactItem {
+  user: {
+    id: string
+    name: string
+    avatarUrl?: string
+  }
+  lastMessage: ChatMessage | null
+  unreadCount: number
+}
+
 function ChatContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -27,8 +34,8 @@ function ChatContent() {
   const { user: currentUser, isAuthenticated } = useAuth()
   
   // Contacts and active conversation
-  const [contacts, setContacts] = useState<User[]>([])
-  const [activeContact, setActiveContact] = useState<User | null>(null)
+  const [contacts, setContacts] = useState<ContactItem[]>([])
+  const [activeContact, setActiveContact] = useState<{ id: string; name: string; avatarUrl?: string } | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [loadingContacts, setLoadingContacts] = useState(true)
   const [wsConnected, setWsConnected] = useState(false)
@@ -39,7 +46,7 @@ function ChatContent() {
   
   // Refs
   const messageEndRef = useRef<HTMLDivElement>(null)
-  const activeContactRef = useRef<User | null>(null)
+  const activeContactRef = useRef<{ id: string; name: string; avatarUrl?: string } | null>(null)
   const pendingQueueRef = useRef<string[]>([])
 
   // Initialize socket
@@ -53,24 +60,37 @@ function ChatContent() {
     activeContactRef.current = activeContact
   }, [activeContact])
 
-  // Load contacts (all users except current user)
+  // Load conversations
   useEffect(() => {
     if (!isAuthenticated) return
 
-    usersApi.getAll()
+    chatApi.getConversations()
       .then((data) => {
-        const filtered = data.filter((u) => u.id !== currentUser?.id)
-        setContacts(filtered)
+        const mapped: ContactItem[] = data.map((item) => ({
+          user: item.contact,
+          lastMessage: item.lastMessage
+            ? {
+                id: item.lastMessage.id,
+                senderId: item.lastMessage.senderId,
+                receiverId: item.lastMessage.receiverId,
+                content: item.lastMessage.content,
+                createdAt: item.lastMessage.createdAt,
+                status: item.lastMessage.status as ChatMessage['status'],
+              }
+            : null,
+          unreadCount: item.unreadCount,
+        }))
+        setContacts(mapped)
         
         // If a target userId was specified in URL params, pre-select it
         if (targetUserId) {
-          const match = filtered.find((u) => u.id === targetUserId)
-          if (match) setActiveContact(match)
-        } else if (filtered[0]) {
-          setActiveContact(filtered[0])
+          const match = mapped.find((c) => c.user.id === targetUserId)
+          if (match) setActiveContact(match.user)
+        } else if (mapped[0]) {
+          setActiveContact(mapped[0].user)
         }
       })
-      .catch(() => toast.error('Gagal memuat daftar kontak'))
+      .catch(() => toast.error('Gagal memuat percakapan'))
       .finally(() => setLoadingContacts(false))
   }, [isAuthenticated, currentUser, targetUserId])
 
@@ -102,10 +122,11 @@ function ChatContent() {
     const handleReceiveMessage = (msg: any) => {
       // Check if message belongs to active conversation
       const currentActive = activeContactRef.current
-      if (
+      const isForActiveChat =
         (msg.senderId === currentActive?.id && msg.receiverId === currentUser?.id) ||
         (msg.senderId === currentUser?.id && msg.receiverId === currentActive?.id)
-      ) {
+
+      if (isForActiveChat) {
         setMessages((prev) => {
           // Prevent duplicates
           if (prev.some((m) => m.id === msg.id)) return prev
@@ -120,8 +141,36 @@ function ChatContent() {
         })
       } else {
         // Trigger notification toast for background message
-        const sender = contacts.find((c) => c.id === msg.senderId)
-        toast.info(`Pesan baru dari ${sender?.name || 'Pengguna'}: ${msg.content || msg.message}`)
+        const sender = contacts.find((c) => c.user.id === msg.senderId)
+        toast.info(`Pesan baru dari ${sender?.user.name || 'Pengguna'}: ${msg.content || msg.message}`)
+      }
+
+      // Update contact's lastMessage & re-sort array
+      const contactId = msg.senderId === currentUser?.id ? msg.receiverId : msg.senderId
+      if (contactId && contactId !== currentUser?.id) {
+        setContacts((prev) => {
+          const updated = prev.map((c) =>
+            c.user.id === contactId
+              ? {
+                  ...c,
+                  lastMessage: {
+                    id: msg.id || String(Date.now()),
+                    senderId: msg.senderId,
+                    receiverId: msg.receiverId,
+                    content: msg.content || msg.message,
+                    createdAt: msg.createdAt || new Date().toISOString(),
+                    status: msg.status || 'read',
+                  },
+                  unreadCount: isForActiveChat ? 0 : c.unreadCount + 1,
+                }
+              : c
+          )
+          return [...updated].sort((a, b) => {
+            const dateA = a.lastMessage?.createdAt ? new Date(a.lastMessage.createdAt).getTime() : 0
+            const dateB = b.lastMessage?.createdAt ? new Date(b.lastMessage.createdAt).getTime() : 0
+            return dateB - dateA
+          })
+        })
       }
     }
 
@@ -260,7 +309,7 @@ function ChatContent() {
   }
 
   const filteredContacts = contacts.filter((c) =>
-    c.name.toLowerCase().includes(searchQuery.toLowerCase())
+    c.user.name.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
   if (!isAuthenticated) {
@@ -318,30 +367,36 @@ function ChatContent() {
           ) : (
             filteredContacts.map((contact) => (
               <button
-                key={contact.id}
-                onClick={() => setActiveContact(contact)}
+                key={contact.user.id}
+                onClick={() => setActiveContact(contact.user)}
                 className={`w-full flex items-center gap-3 p-3 rounded-2xl transition-all border ${
-                  activeContact?.id === contact.id
+                  activeContact?.id === contact.user.id
                     ? 'bg-primary/5 border-primary/20 shadow-sm'
                     : 'border-transparent hover:bg-surface/50'
                 }`}
               >
                 <div className="relative h-12 w-12 rounded-full overflow-hidden border border-border bg-surface flex items-center justify-center shrink-0">
-                  {contact.avatarUrl ? (
-                    <img src={contact.avatarUrl} alt={contact.name} className="h-full w-full object-cover" />
+                  {contact.user.avatarUrl ? (
+                    <img src={contact.user.avatarUrl} alt={contact.user.name} className="h-full w-full object-cover" />
                   ) : (
-                    <span className="text-sm font-black text-primary">{contact.name[0]}</span>
+                    <span className="text-sm font-black text-primary">{contact.user.name[0]}</span>
                   )}
                   <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-emerald-500 border-2 border-white shadow-sm" />
                 </div>
                 <div className="text-left min-w-0 flex-1">
                   <div className="flex justify-between items-baseline">
-                    <p className="text-xs sm:text-sm font-bold text-ink truncate">{contact.name}</p>
-                    <span className="text-[9px] font-black tracking-wider px-2 py-0.5 rounded bg-surface border border-border text-muted">
-                      {contact.role}
-                    </span>
+                    <p className="text-xs sm:text-sm font-bold text-ink truncate">{contact.user.name}</p>
+                    {contact.unreadCount > 0 && (
+                      <span className="text-[9px] font-black flex items-center justify-center h-4 min-w-[16px] px-1 rounded-full bg-[#7f5531] text-white">
+                        {contact.unreadCount > 99 ? '99+' : contact.unreadCount}
+                      </span>
+                    )}
                   </div>
-                  <p className="text-[10px] font-semibold text-muted/80 truncate mt-1">Klik untuk mulai chat</p>
+                  <p className="text-[10px] font-semibold text-muted/80 truncate mt-1">
+                    {contact.lastMessage
+                      ? (contact.lastMessage.senderId === currentUser?.id ? 'Anda: ' : '') + contact.lastMessage.content
+                      : 'Belum ada pesan'}
+                  </p>
                 </div>
               </button>
             ))
