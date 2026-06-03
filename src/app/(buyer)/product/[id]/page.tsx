@@ -71,7 +71,7 @@ export default function ProductDetailPage({ params: paramsPromise }: { params: P
   const handleSubmitReview = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!isAuthenticated) {
-      router.push('/login')
+      router.push(`/login?redirect=/product/${productId}`)
       return
     }
     setSubmitReviewLoading(true)
@@ -218,46 +218,42 @@ export default function ProductDetailPage({ params: paramsPromise }: { params: P
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="rounded-3xl bg-white p-5 sm:p-6 shadow-soft border border-border/70 h-fit space-y-4">
             <h3 className="font-bold text-base">Tulis Ulasan</h3>
-            {isAuthenticated ? (
-              <form onSubmit={handleSubmitReview} className="space-y-4">
-                <div>
-                  <label className="mb-1 block text-sm font-medium">Beri Bintang</label>
-                  <div className="flex gap-1">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <button
-                        key={star}
-                        type="button"
-                        onClick={() => setRating(star)}
-                        className="text-amber-400 hover:scale-110 transition-transform"
-                      >
-                        <Star size={24} className={star <= rating ? 'fill-amber-400' : 'text-border'} />
-                      </button>
-                    ))}
-                  </div>
+            <form onSubmit={handleSubmitReview} className="space-y-4">
+              {!isAuthenticated && (
+                <div className="rounded-2xl bg-amber-50 border border-amber-200 px-4 py-3 text-xs text-amber-700 font-medium">
+                  Anda perlu masuk akun untuk mengirim ulasan.
                 </div>
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium">Ulasan Anda</label>
-                  <textarea
-                    rows={4}
-                    value={comment}
-                    onChange={(e) => setComment(e.target.value)}
-                    placeholder="Tulis pengalaman Anda..."
-                    className="w-full rounded-2xl border-2 border-border/80 px-4 py-3 outline-none focus:border-primary transition-colors text-sm text-ink placeholder:text-muted/50 resize-none"
-                    required
-                  />
+              )}
+              <div>
+                <label className="mb-1 block text-sm font-medium">Beri Bintang</label>
+                <div className="flex gap-1">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setRating(star)}
+                      className="text-amber-400 hover:scale-110 transition-transform"
+                    >
+                      <Star size={24} className={star <= rating ? 'fill-amber-400' : 'text-border'} />
+                    </button>
+                  ))}
                 </div>
-                <Button type="submit" fullWidth loading={submitReviewLoading} size="sm">
-                  Kirim Ulasan
-                </Button>
-              </form>
-            ) : (
-              <div className="text-center py-4 space-y-3">
-                <p className="text-sm text-muted">Silakan masuk untuk menulis ulasan.</p>
-                <Link href="/login">
-                  <Button variant="secondary" size="sm">Masuk Akun</Button>
-                </Link>
               </div>
-            )}
+              <div>
+                <label className="mb-1.5 block text-sm font-medium">Ulasan Anda</label>
+                <textarea
+                  rows={4}
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  placeholder="Tulis pengalaman Anda..."
+                  className="w-full rounded-2xl border-2 border-border/80 px-4 py-3 outline-none focus:border-primary transition-colors text-sm text-ink placeholder:text-muted/50 resize-none"
+                  required
+                />
+              </div>
+              <Button type="submit" fullWidth loading={submitReviewLoading} size="sm">
+                Kirim Ulasan
+              </Button>
+            </form>
           </div>
 
           <div className="lg:col-span-2 space-y-3 sm:space-y-4">
