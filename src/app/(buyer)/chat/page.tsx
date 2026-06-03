@@ -5,8 +5,11 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useSocket } from '@/lib/hooks/useSocket'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { chatApi } from '@/lib/api/chat'
-import { Send, Search, MessageSquare, ArrowLeft, Check, CheckCheck, Smile, ShieldAlert } from 'lucide-react'
+import { usersApi } from '@/lib/api/users'
+import { Send, Search, MessageSquare, ArrowLeft, Check, CheckCheck, Smile, ShieldAlert, Plus, X } from 'lucide-react'
 import { toast } from '@/lib/hooks/useToast'
+import Modal from '@/components/ui/Modal'
+import { User } from '@/types'
 
 interface ChatMessage {
   id: string
@@ -44,6 +47,31 @@ function ChatContent() {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [inputText, setInputText] = useState('')
   
+  // New Chat
+  const [showNewChat, setShowNewChat] = useState(false)
+  const [userSearch, setUserSearch] = useState('')
+  const [allUsers, setAllUsers] = useState<User[]>([])
+  const [loadingUsers, setLoadingUsers] = useState(false)
+
+  const openNewChat = async () => {
+    setShowNewChat(true)
+    setLoadingUsers(true)
+    try {
+      const data = await usersApi.getAll()
+      setAllUsers(data.filter((u) => u.id !== currentUser?.id))
+    } catch { toast.error('Gagal memuat daftar user') }
+    finally { setLoadingUsers(false) }
+  }
+
+  const startNewChat = (u: User) => {
+    setShowNewChat(false)
+    setUserSearch('')
+    if (!contacts.some((c) => c.user.id === u.id)) {
+      setContacts((prev) => [{ user: { id: u.id, name: u.name, avatarUrl: u.avatarUrl }, lastMessage: null, unreadCount: 0 }, ...prev])
+    }
+    setActiveContact({ id: u.id, name: u.name, avatarUrl: u.avatarUrl })
+  }
+
   // Refs
   const messageEndRef = useRef<HTMLDivElement>(null)
   const activeContactRef = useRef<{ id: string; name: string; avatarUrl?: string } | null>(null)
@@ -85,7 +113,16 @@ function ChatContent() {
         // If a target userId was specified in URL params, pre-select it
         if (targetUserId) {
           const match = mapped.find((c) => c.user.id === targetUserId)
-          if (match) setActiveContact(match.user)
+          if (match) {
+            setActiveContact(match.user)
+          } else {
+            // Belum pernah chat — cari info user dari API
+            usersApi.getById(targetUserId).then((u) => {
+              const newContact = { id: u.id, name: u.name, avatarUrl: u.avatarUrl }
+              setContacts((prev) => [{ user: newContact, lastMessage: null, unreadCount: 0 }, ...prev])
+              setActiveContact(newContact)
+            }).catch(() => {})
+          }
         } else if (mapped[0]) {
           setActiveContact(mapped[0].user)
         }
@@ -336,9 +373,14 @@ function ChatContent() {
               <MessageSquare className="text-primary" size={22} />
               <span>Percakapan</span>
             </h1>
-            <button onClick={() => router.push('/')} className="text-muted hover:text-ink text-xs font-bold md:hidden flex items-center gap-1">
-              <ArrowLeft size={14} /> Beranda
-            </button>
+            <div className="flex items-center gap-1">
+              <button onClick={openNewChat} className="p-2 hover:bg-surface rounded-xl text-muted hover:text-primary transition-colors" title="Percakapan Baru">
+                <Plus size={18} />
+              </button>
+              <button onClick={() => router.push('/')} className="text-muted hover:text-ink text-xs font-bold md:hidden flex items-center gap-1">
+                <ArrowLeft size={14} /> Beranda
+              </button>
+            </div>
           </div>
           <div className="relative">
             <Search className="absolute left-4 top-3 text-muted/50" size={16} />
@@ -500,6 +542,54 @@ function ChatContent() {
           </div>
         )}
       </div>
+
+      <Modal
+        isOpen={showNewChat}
+        onClose={() => { setShowNewChat(false); setUserSearch('') }}
+        title="Percakapan Baru"
+        size="md"
+      >
+        <div className="space-y-4">
+          <input
+            type="text"
+            placeholder="Cari pengguna..."
+            value={userSearch}
+            onChange={(e) => setUserSearch(e.target.value)}
+            className="w-full px-4 py-3 bg-surface border border-border/60 rounded-2xl text-sm font-semibold text-ink outline-none focus:border-primary placeholder:text-muted/50"
+            autoFocus
+          />
+          <div className="max-h-64 overflow-y-auto space-y-1">
+            {loadingUsers ? (
+              <div className="text-center py-6 text-sm text-muted font-medium">Memuat...</div>
+            ) : allUsers.length === 0 ? (
+              <div className="text-center py-6 space-y-3">
+                <p className="text-sm text-muted font-medium">Tidak ada pengguna lain ditemukan</p>
+                <p className="text-xs text-muted/70 leading-relaxed">
+                  Mulai percakapan dengan membuka halaman produk dan klik tombol <strong>Tanya</strong> di samping tombol Keranjang.
+                </p>
+              </div>
+            ) : (
+              allUsers
+                .filter((u) => u.name.toLowerCase().includes(userSearch.toLowerCase()) || u.email.toLowerCase().includes(userSearch.toLowerCase()))
+                .map((u) => (
+                  <button
+                    key={u.id}
+                    onClick={() => startNewChat(u)}
+                    className="w-full flex items-center gap-3 p-3 rounded-2xl hover:bg-surface/50 transition-colors"
+                  >
+                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-sm font-black text-primary shrink-0">
+                      {u.name[0]}
+                    </div>
+                    <div className="text-left min-w-0">
+                      <p className="text-sm font-bold text-ink truncate">{u.name}</p>
+                      <p className="text-xs text-muted truncate">{u.email}</p>
+                    </div>
+                  </button>
+                ))
+            )}
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }
