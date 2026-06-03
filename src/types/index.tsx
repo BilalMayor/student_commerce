@@ -5,6 +5,11 @@ export interface User {
   role: 'BUYER' | 'SELLER' | 'ADMIN'
   avatarUrl?: string
   isVerified?: boolean
+  sellerStatus?: 'PENDING' | 'APPROVED' | 'REJECTED' | null
+  shopName?: string
+  shopDescription?: string
+  shopLogo?: string
+  category?: string
 }
 
 export interface Category {

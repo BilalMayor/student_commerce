@@ -12,19 +12,19 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import GoogleLoginButton from '@/components/auth/GoogleLoginButton'
 
-interface RegisterForm { name: string; email: string; password: string; role: 'BUYER' | 'SELLER' }
+interface RegisterForm { name: string; email: string; password: string }
 
 export default function RegisterPage() {
   const router = useRouter()
   const setAuth = useAuthStore((s) => s.setAuth)
-  const { register, handleSubmit, formState: { errors } } = useForm<RegisterForm>({ defaultValues: { role: 'BUYER' } })
+  const { register, handleSubmit, formState: { errors } } = useForm<RegisterForm>()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
   const onSubmit = async (data: RegisterForm) => {
     setLoading(true); setError('')
     try {
-      const res = await authApi.register(data)
+      const res = await authApi.register({ ...data, role: 'BUYER' })
       Cookies.set('token', res.token, { expires: 7 })
       setAuth(res.user, res.token)
       router.push('/')
@@ -71,15 +71,6 @@ export default function RegisterPage() {
             <NeoInput {...register('name', { required: 'Nama wajib diisi' })} label="Nama Lengkap" placeholder="John Doe" error={errors.name?.message} />
             <NeoInput {...register('email', { required: 'Email wajib diisi' })} type="email" label="Email" placeholder="nama@email.com" error={errors.email?.message} />
             <NeoInput {...register('password', { required: 'Password wajib diisi', minLength: { value: 6, message: 'Minimal 6 karakter' } })} type="password" label="Kata Sandi" placeholder="••••••••" error={errors.password?.message} />
-
-            {/* Role selector */}
-            <div>
-              <label className="block text-sm font-bold uppercase tracking-wide text-[#0A0A0A] mb-1.5">Daftar Sebagai</label>
-              <select {...register('role')} className="w-full border-2 border-[#0A0A0A] bg-white px-4 py-3 text-sm font-medium text-[#0A0A0A] outline-none focus:shadow-[4px_4px_0px_#0A0A0A] transition-all cursor-pointer">
-                <option value="BUYER">Pembeli</option>
-                <option value="SELLER">Penjual</option>
-              </select>
-            </div>
 
             <NeoButton type="submit" variant="blue" size="lg" fullWidth loading={loading}>Daftar Sekarang →</NeoButton>
           </form>

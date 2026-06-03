@@ -116,24 +116,27 @@ export default function SellerRegisterPage() {
     return (
       <main className="mx-auto max-w-lg px-4 py-16 flex items-center justify-center min-h-[80vh]">
         <div className="rounded-[2.25rem] border border-primary/20 bg-white p-6 sm:p-8 md:p-10 shadow-soft text-center space-y-6">
-          <div className="h-16 w-16 bg-primary/10 border border-primary/25 rounded-full flex items-center justify-center mx-auto text-primary animate-bounce">
-            <Store size={32} />
+          <div className="h-16 w-16 bg-amber-500/10 border border-amber-500/25 rounded-full flex items-center justify-center mx-auto text-amber-600 animate-pulse">
+            <ShieldCheck size={32} />
           </div>
           <div className="space-y-2">
-            <h2 className="text-2xl font-black text-ink tracking-tight">Selamat! Toko Berhasil Dibuat</h2>
-            <p className="text-sm text-muted font-medium max-w-xs mx-auto leading-relaxed">
-              Akun Anda sekarang telah bertipe <span className="font-bold text-primary">Penjual (Seller)</span>. Anda bisa mulai mengunggah produk dan memantau pesanan.
+            <h2 className="text-2xl font-black text-ink tracking-tight">Pendaftaran Berhasil Dikirim!</h2>
+            <p className="text-sm text-muted font-medium max-w-md mx-auto leading-relaxed">
+              Terima kasih telah mendaftar sebagai penjual. Akun Anda saat ini dalam status <span className="font-bold text-amber-600">menunggu verifikasi</span> dari admin.
+            </p>
+            <p className="text-sm text-ink font-semibold max-w-md mx-auto leading-relaxed pt-2">
+              Anda akan menerima notifikasi setelah akun Anda diverifikasi. Proses ini biasanya memakan waktu 1-2 hari kerja.
             </p>
           </div>
           <hr className="border-border/60" />
           <div className="flex flex-col gap-3">
-            <Link href="/seller/dashboard" className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-primary py-3.5 text-sm font-black text-white hover:bg-primary-dark shadow-soft-primary active:scale-[0.98] transition-all">
-              <span>Masuk ke Dashboard Seller</span>
+            <Link href="/" className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-primary py-3.5 text-sm font-black text-white hover:bg-primary-dark shadow-soft-primary active:scale-[0.98] transition-all">
+              <span>Kembali ke Beranda</span>
               <ArrowRight size={15} />
             </Link>
-            <Link href="/" className="text-xs font-bold text-muted hover:text-ink transition-colors">
-              Kembali ke Beranda Buyer
-            </Link>
+            <p className="text-xs font-medium text-muted">
+              Anda akan mendapat notifikasi saat verifikasi selesai
+            </p>
           </div>
         </div>
       </main>
