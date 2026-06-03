@@ -7,8 +7,9 @@ import { usersApi } from '@/lib/api/users'
 import { uploadImage } from '@/lib/api/upload'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
+import Modal from '@/components/ui/Modal'
 import { toast } from '@/lib/hooks/useToast'
-import { ShieldCheck, ArrowRight, Store, Upload, X, Image as ImageIcon } from 'lucide-react'
+import { ShieldCheck, ArrowRight, Store, Upload, X, Image as ImageIcon, Clock } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
 
@@ -25,7 +26,7 @@ export default function SellerRegisterPage() {
   const [uploading, setUploading] = useState(false)
 
   const [loading, setLoading] = useState(false)
-  const [isSuccess, setIsSuccess] = useState(false)
+  const [showSuccessModal, setShowSuccessModal] = useState(false)
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -86,61 +87,13 @@ export default function SellerRegisterPage() {
         ...(logoUrl && { shopLogo: logoUrl })
       })
 
-      // Get current token from storage to preserve session
-      const stored = localStorage.getItem('auth-storage')
-      const token = stored ? JSON.parse(stored).state.token : ''
-      
-      // Update store role
-      setAuth(updatedUser, token)
-      
-      toast.success('Pendaftaran seller berhasil!')
-      setIsSuccess(true)
+      toast.success('Pendaftaran seller berhasil dikirim!')
+      setShowSuccessModal(true)
     } catch (err: any) {
-      // Fallback local update if backend fails (ideal for local testing)
-      if (user) {
-        const fallbackUser = { ...user, role: 'SELLER' as const }
-        const stored = localStorage.getItem('auth-storage')
-        const token = stored ? JSON.parse(stored).state.token : ''
-        setAuth(fallbackUser, token)
-        toast.success('Pendaftaran seller disimulasikan berhasil!')
-        setIsSuccess(true)
-      } else {
-        toast.error(err.message || 'Gagal mendaftar sebagai penjual')
-      }
+      toast.error(err.message || 'Gagal mendaftar sebagai penjual')
     } finally {
       setLoading(false)
     }
-  }
-
-  if (isSuccess) {
-    return (
-      <main className="mx-auto max-w-lg px-4 py-16 flex items-center justify-center min-h-[80vh]">
-        <div className="rounded-[2.25rem] border border-primary/20 bg-white p-6 sm:p-8 md:p-10 shadow-soft text-center space-y-6">
-          <div className="h-16 w-16 bg-amber-500/10 border border-amber-500/25 rounded-full flex items-center justify-center mx-auto text-amber-600 animate-pulse">
-            <ShieldCheck size={32} />
-          </div>
-          <div className="space-y-2">
-            <h2 className="text-2xl font-black text-ink tracking-tight">Pendaftaran Berhasil Dikirim!</h2>
-            <p className="text-sm text-muted font-medium max-w-md mx-auto leading-relaxed">
-              Terima kasih telah mendaftar sebagai penjual. Akun Anda saat ini dalam status <span className="font-bold text-amber-600">menunggu verifikasi</span> dari admin.
-            </p>
-            <p className="text-sm text-ink font-semibold max-w-md mx-auto leading-relaxed pt-2">
-              Anda akan menerima notifikasi setelah akun Anda diverifikasi. Proses ini biasanya memakan waktu 1-2 hari kerja.
-            </p>
-          </div>
-          <hr className="border-border/60" />
-          <div className="flex flex-col gap-3">
-            <Link href="/" className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-primary py-3.5 text-sm font-black text-white hover:bg-primary-dark shadow-soft-primary active:scale-[0.98] transition-all">
-              <span>Kembali ke Beranda</span>
-              <ArrowRight size={15} />
-            </Link>
-            <p className="text-xs font-medium text-muted">
-              Anda akan mendapat notifikasi saat verifikasi selesai
-            </p>
-          </div>
-        </div>
-      </main>
-    )
   }
 
   return (
@@ -161,7 +114,7 @@ export default function SellerRegisterPage() {
         <div className="rounded-2xl border-2 border-primary/25 bg-primary/5 p-5 flex gap-3 items-start">
           <ShieldCheck size={20} className="text-primary shrink-0 mt-0.5" />
           <p className="text-xs sm:text-sm text-ink leading-relaxed font-medium">
-            Dengan mendaftar, toko Anda akan langsung aktif dan dapat mulai berjualan di marketplace StudentCommerce
+            Setelah mendaftar, akun Anda akan masuk dalam antrian verifikasi oleh admin. Anda akan mendapat notifikasi setelah disetujui.
           </p>
         </div>
 
@@ -290,6 +243,33 @@ export default function SellerRegisterPage() {
           </p>
         </div>
       </form>
+
+      <Modal
+        isOpen={showSuccessModal}
+        onClose={() => router.push('/profile?tab=notifications')}
+        title="Pendaftaran Terkirim"
+        size="sm"
+        footer={
+          <Button onClick={() => router.push('/profile?tab=notifications')}>
+            OK, Saya Mengerti
+          </Button>
+        }
+      >
+        <div className="text-center space-y-4">
+          <div className="h-16 w-16 bg-amber-500/10 border border-amber-500/25 rounded-full flex items-center justify-center mx-auto text-amber-600">
+            <Clock size={32} />
+          </div>
+          <div className="space-y-2">
+            <p className="text-base font-bold text-ink">Mohon Tunggu Sebentar</p>
+            <p className="text-sm text-muted leading-relaxed">
+              Pendaftaran toko Anda telah berhasil dikirim dan sedang menunggu verifikasi dari admin.
+            </p>
+            <p className="text-sm font-semibold text-amber-600">
+              Anda akan mendapatkan notifikasi setelah akun seller Anda diverifikasi.
+            </p>
+          </div>
+        </div>
+      </Modal>
     </main>
   )
 }

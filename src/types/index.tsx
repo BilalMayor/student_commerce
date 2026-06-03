@@ -102,6 +102,9 @@ export interface Notification {
   id: string
   title?: string
   message: string
+  type?: string
+  data?: any
+  link?: string
   isRead: boolean
   createdAt: string
 }

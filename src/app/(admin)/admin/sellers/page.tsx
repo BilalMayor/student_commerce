@@ -112,7 +112,7 @@ export default function AdminSellersPage() {
                               Verified
                             </Badge>
                           ) : (
-                            <Badge variant="default">Unknown</Badge>
+                            <Badge variant="secondary">Unknown</Badge>
                           )}
                         </td>
                         <td className="px-5 sm:px-6 py-4 text-right">

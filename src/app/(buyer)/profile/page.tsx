@@ -4,7 +4,7 @@ import { useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import {
   Camera, MapPin, User, LogOut, Plus, Trash2,
-  ShoppingCart, ShoppingBag, Star, Bell,
+  ShoppingCart, ShoppingBag, Star, Bell, Store,
   CheckCircle2, ArrowRight, ShieldCheck, FileText, Check
 } from 'lucide-react'
 import { usersApi } from '@/lib/api/users'
@@ -18,6 +18,7 @@ import { useNotificationStore } from '@/lib/store/notificationStore'
 import { Address, Order, Review } from '@/types'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
+import Modal from '@/components/ui/Modal'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { toast } from '@/lib/hooks/useToast'
 import { formatDate } from '@/lib/utils/formatDate'
@@ -185,6 +186,8 @@ function ProfilePageContent() {
   }
 
   // Notification operations
+  const [sellerApprovalNotif, setSellerApprovalNotif] = useState<Notification | null>(null)
+
   const handleMarkAsRead = async (id: string) => {
     try {
       await markAsRead(id)
@@ -200,6 +203,27 @@ function ProfilePageContent() {
       toast.success('Semua notifikasi ditandai dibaca')
     } catch (err: any) {
       toast.error('Gagal memperbarui status notifikasi')
+    }
+  }
+
+  const handleAcceptSeller = async (notif: Notification) => {
+    setSellerApprovalNotif(notif)
+  }
+
+  const handleConfirmSeller = async () => {
+    if (!sellerApprovalNotif) return
+    try {
+      const updatedUser = await usersApi.getMe()
+      const stored = localStorage.getItem('auth-storage')
+      const token = stored ? JSON.parse(stored).state.token : ''
+      setAuth(updatedUser, token)
+      await markAsRead(sellerApprovalNotif.id)
+      setSellerApprovalNotif(null)
+      toast.success('Selamat! Akun seller Anda sudah aktif!')
+      router.push('/seller/dashboard')
+    } catch (err: any) {
+      toast.error(err.message || 'Gagal mengaktifkan akun seller')
+      setSellerApprovalNotif(null)
     }
   }
 
@@ -645,38 +669,81 @@ function ProfilePageContent() {
                 </div>
               ) : (
                 <div className="divide-y divide-border/60">
-                  {notifications.map((notif) => (
-                    <div key={notif.id} className="flex gap-4 py-4 first:pt-0 last:pb-0 items-start justify-between">
-                      <div className="flex gap-3 items-start min-w-0">
-                        <span className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 text-sm mt-0.5 ${
-                          notif.isRead ? 'bg-muted/10 text-muted' : 'bg-primary/10 text-primary animate-pulse'
-                        }`}>
-                          📢
-                        </span>
-                        <div className="min-w-0">
-                          <p className={`text-sm leading-relaxed ${notif.isRead ? 'text-muted font-medium' : 'text-ink font-bold'}`}>
-                            {notif.message}
-                          </p>
-                          <p className="text-[10px] text-muted mt-1 font-semibold">{formatDate(notif.createdAt)}</p>
+                  {notifications.map((notif) => {
+                    const isSellerApproval = notif.type === 'SELLER_APPROVED' || notif.title?.includes('Disetujui')
+                    
+                    return (
+                      <div key={notif.id} className="flex gap-4 py-4 first:pt-0 last:pb-0 items-start justify-between">
+                        <div className="flex gap-3 items-start min-w-0">
+                          <span className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 text-sm mt-0.5 ${
+                            notif.isRead ? 'bg-muted/10 text-muted' : 'bg-primary/10 text-primary animate-pulse'
+                          }`}>
+                            {isSellerApproval ? '🎉' : '📢'}
+                          </span>
+                          <div className="min-w-0">
+                            <p className={`text-sm leading-relaxed ${notif.isRead ? 'text-muted font-medium' : 'text-ink font-bold'}`}>
+                              {notif.message}
+                            </p>
+                            <p className="text-[10px] text-muted mt-1 font-semibold">{formatDate(notif.createdAt)}</p>
+                          </div>
                         </div>
+                        
+                        {!notif.isRead && (
+                          isSellerApproval ? (
+                            <button
+                              onClick={() => handleAcceptSeller(notif)}
+                              className="shrink-0 inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider text-white bg-emerald-600 hover:bg-emerald-700 px-3 py-1.5 rounded-xl transition-all"
+                            >
+                              <ShieldCheck size={12} />
+                              <span>Aktifkan</span>
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleMarkAsRead(notif.id)}
+                              className="shrink-0 text-[10px] font-black uppercase tracking-wider text-primary hover:text-primary-dark hover:underline bg-primary/10 border border-primary/20 px-2.5 py-1 rounded-xl transition-all"
+                            >
+                              Tandai Dibaca
+                            </button>
+                          )
+                        )}
                       </div>
-                      
-                      {!notif.isRead && (
-                        <button
-                          onClick={() => handleMarkAsRead(notif.id)}
-                          className="shrink-0 text-[10px] font-black uppercase tracking-wider text-primary hover:text-primary-dark hover:underline bg-primary/10 border border-primary/20 px-2.5 py-1 rounded-xl transition-all"
-                        >
-                          Tandai Dibaca
-                        </button>
-                      )}
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               )}
             </div>
           )}
         </div>
       </div>
+
+      <Modal
+        isOpen={sellerApprovalNotif !== null}
+        onClose={() => setSellerApprovalNotif(null)}
+        title="Aktifkan Akun Seller"
+        size="sm"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setSellerApprovalNotif(null)}>
+              Nanti Saja
+            </Button>
+            <Button onClick={handleConfirmSeller}>
+              OK, Aktifkan Sekarang
+            </Button>
+          </>
+        }
+      >
+        <div className="text-center space-y-4">
+          <div className="h-16 w-16 bg-emerald-500/10 border border-emerald-500/25 rounded-full flex items-center justify-center mx-auto text-emerald-600">
+            <Store size={32} />
+          </div>
+          <div className="space-y-2">
+            <p className="text-base font-bold text-ink">Akun Seller Anda Telah Disetujui!</p>
+            <p className="text-sm text-muted leading-relaxed">
+              Admin telah memverifikasi akun seller Anda. Tekan tombol di bawah untuk mengaktifkan toko Anda dan mulai berjualan.
+            </p>
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }
