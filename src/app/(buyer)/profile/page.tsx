@@ -15,7 +15,7 @@ import { uploadImage } from '@/lib/api/upload'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useCart } from '@/lib/hooks/useCart'
 import { useNotificationStore } from '@/lib/store/notificationStore'
-import { Address, Order, Review } from '@/types'
+import { Address, Order, Review, Notification as AppNotification } from '@/types'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import Modal from '@/components/ui/Modal'
@@ -186,7 +186,7 @@ function ProfilePageContent() {
   }
 
   // Notification operations
-  const [sellerApprovalNotif, setSellerApprovalNotif] = useState<Notification | null>(null)
+  const [sellerApprovalNotif, setSellerApprovalNotif] = useState<AppNotification | null>(null)
 
   const handleMarkAsRead = async (id: string) => {
     try {
@@ -206,19 +206,19 @@ function ProfilePageContent() {
     }
   }
 
-  const handleAcceptSeller = async (notif: Notification) => {
+  const handleAcceptSeller = async (notif: AppNotification) => {
     setSellerApprovalNotif(notif)
   }
 
   const handleConfirmSeller = async () => {
-    const notif = sellerApprovalNotif
-    if (!notif) return
+    const notifId = sellerApprovalNotif?.id
+    if (!notifId) return
     try {
       const updatedUser = await usersApi.getMe()
       const stored = localStorage.getItem('auth-storage')
       const token = stored ? JSON.parse(stored).state.token : ''
       setAuth(updatedUser, token)
-      await markAsRead(notif.id)
+      await markAsRead(notifId)
       setSellerApprovalNotif(null)
       toast.success('Selamat! Akun seller Anda sudah aktif!')
       router.push('/seller/dashboard')
