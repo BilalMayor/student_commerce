@@ -211,13 +211,14 @@ function ProfilePageContent() {
   }
 
   const handleConfirmSeller = async () => {
-    if (!sellerApprovalNotif) return
+    const notif = sellerApprovalNotif
+    if (!notif) return
     try {
       const updatedUser = await usersApi.getMe()
       const stored = localStorage.getItem('auth-storage')
       const token = stored ? JSON.parse(stored).state.token : ''
       setAuth(updatedUser, token)
-      await markAsRead(sellerApprovalNotif.id)
+      await markAsRead(notif.id)
       setSellerApprovalNotif(null)
       toast.success('Selamat! Akun seller Anda sudah aktif!')
       router.push('/seller/dashboard')
